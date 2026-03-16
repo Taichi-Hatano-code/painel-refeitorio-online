@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash
 from config import DATABASE_URL, SECRET_KEY 
 from dbmanager import dbmanager
 from datetime import datetime
+import calendar
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY 
@@ -64,15 +65,52 @@ def feed():
         flash('⛔ Sessão encerrada: Você não tem permissão de Admin.')
         return redirect(url_for('login'))
 
-    hoje = datetime.now().strftime("%d/%m/%Y")
+    data_filtro = request.args.get('data')
+    filtro_mes = request.args.get('mes') # Formato: YYYY-MM
+    tipo_filtro = request.args.get('tipo_refeicao') # <-- NOVO
     
-    # Filtra as refeições pela empresa do Admin logado
-    refeicoes_hoje = db.quant_refei_detl_empresa(hoje, current_user.empresa)
+    hoje = datetime.now()
     
-    if refeicoes_hoje:
-        refeicoes_hoje = list(reversed(refeicoes_hoje))
+    if filtro_mes:
+        # Lógica para pegar o mês inteiro
+        ano, mes = map(int, filtro_mes.split('-'))
+        ultimo_dia = calendar.monthrange(ano, mes)[1]
+        inicio = datetime(ano, mes, 1)
+        fim = datetime(ano, mes, ultimo_dia, 23, 59, 59)
+    elif data_filtro:
+        # Lógica para um dia específico
+        inicio = datetime.strptime(data_filtro, '%Y-%m-%d')
+        fim = inicio.replace(hour=23, minute=59, second=59)
+    else:
+        # Padrão: Hoje
+        inicio = hoje.replace(hour=0, minute=0, second=0)
+        fim = hoje.replace(hour=23, minute=59, second=59)
+
+    refeicoes = db.buscar_refeicoes_periodo(
+        current_user.empresa, 
+        inicio, 
+        fim, 
+        tipo=tipo_filtro
+    )
+
+    refeicoes = db.buscar_refeicoes_periodo(current_user.empresa, inicio, fim)
+    
+    return render_template('feed.html', refeicoes=refeicoes)
+
+@app.route('/perfil/<cpf>')
+@login_required
+def perfil_funcionario(cpf):
+    # Usa a função que você já tem (agora turbinada com joinedload)
+    funcionario = db.get_colaborador_by_cpf(cpf)
+    
+    if not funcionario:
+        flash("Funcionário não encontrado.")
+        return redirect(url_for('feed'))
         
-    return render_template('feed.html', refeicoes=refeicoes_hoje)
+    # Ordena as refeições para aparecer a mais recente primeiro
+    refeicoes_ordenadas = sorted(funcionario.refeicoes, key=lambda x: x.data, reverse=True)
+    
+    return render_template('perfil.html', funcionario=funcionario, refeicoes=refeicoes_ordenadas)
 
 @app.route('/logout')
 @login_required

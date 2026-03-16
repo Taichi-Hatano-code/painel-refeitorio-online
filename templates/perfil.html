@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil: {{ funcionario.nome }}</title>
+    <style>
+        body { font-family: sans-serif; background: #1e1e2f; color: white; padding: 20px; }
+        .card { background: #2a2a40; padding: 20px; border-radius: 10px; max-width: 600px; margin: 0 auto; border-top: 5px solid #4CAF50; }
+        .info { margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        .historico { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #444; text-align: left; }
+        .btn-voltar { color: #4CAF50; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 0 auto;">
+        <a href="/feed" class="btn-voltar">← Voltar para o Feed</a>
+        
+        <div class="card">
+            <div class="info">
+                <h1>{{ funcionario.nome }}</h1>
+                <p><strong>CPF:</strong> {{ funcionario.cpf }}</p>
+                <p><strong>Empresa:</strong> {{ funcionario.empresa }}</p>
+                <p><strong>Cargo:</strong> {{ funcionario.cargo }}</p>
+            </div>
+
+            <div class="historico">
+                <h3>Histórico de Refeições</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ref in refeicoes %}
+                        <tr>
+                            <td>{{ ref.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ ref.tipo }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2">Nenhuma refeição registrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

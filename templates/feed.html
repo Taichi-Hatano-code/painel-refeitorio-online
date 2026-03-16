@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="5"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Feed - {{ current_user.empresa }}</title>
     <style>
@@ -23,14 +22,38 @@
         <a href="/logout" class="logout-btn">Sair</a>
     </div>
     
+    <div class="filtros" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; gap: 10px;">
+        <form method="GET" action="/feed" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <label>Dia:</label>
+        <input type="date" name="data" style="padding: 5px; border-radius: 5px;">
+        
+        <label>Mês:</label>
+        <input type="month" name="mes" style="padding: 5px; border-radius: 5px;">
+
+        <label>Tipo:</label>
+        <select name="tipo_refeicao" style="padding: 5px; border-radius: 5px;">
+            <option value="Todos">Todos</option>
+            <option value="Café">Café</option>
+            <option value="Almoço">Almoço</option>
+            <option value="Jantar">Jantar</option>
+        </select>
+        
+        <button type="submit" style="background: #4CAF50; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">Filtrar Agora</button>
+        <a href="/feed" style="color: #aaa; text-decoration: none; font-size: 12px;">Limpar</a>
+        </form>
+    </div>
+
     <div class="feed-container">
         {% if refeicoes %}
             {% for ref in refeicoes %}
             <div class="refeicao-card">
                 <div class="info-colaborador">
-                    <strong>{{ ref.funcionario.nome if ref.funcionario else "Desconhecido" }}</strong>
-                    <span>CPF: {{ ref.funcionario.cpf if ref.funcionario else "Não informado" }}</span>                </div>
-                <div class="badge-tipo">{{ ref.tipo }}</div>
+                    <a href="/perfil/{{ ref.funcionario_cpf }}" style="text-decoration: none; color: white;">
+                        <strong>{{ ref.funcionario.nome if ref.funcionario else "Desconhecido" }}</strong>
+                    </a>
+                    <span>CPF: {{ ref.funcionario_cpf }}</span>
+                    <small>{{ ref.data.strftime('%H:%M:%S') }}</small>
+                </div>
             </div>
             {% endfor %}
         {% else %}

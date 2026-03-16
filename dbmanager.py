@@ -17,15 +17,13 @@ class dbmanager():
     def get_colaborador_by_cpf(self, cpf_busca):
         with Session(self.engine) as session:
             try:
-                # 1. Monta o Select: "Selecione o Colaborador onde o cpf é igual ao cpf_busca"
-                stmt = select(models.Colaborador).where(models.Colaborador.cpf == cpf_busca)
+                # Adicionamos o .options(joinedload(...)) para carregar as refeições junto
+                stmt = select(models.Colaborador).options(
+                    joinedload(models.Colaborador.refeicoes)
+                ).where(models.Colaborador.cpf == cpf_busca)
                 
-                # 2. Executa e pega o primeiro resultado escalar (o objeto)
-                # Se não achar ninguém, retorna None
                 usuario = session.scalars(stmt).first()
-                
                 return usuario
-                
             except Exception as e:
                 print(f"Erro ao buscar usuário: {e}")
                 return None
@@ -53,3 +51,45 @@ class dbmanager():
             except Exception as e:
                 print(f"Erro ao buscar refeições por empresa: {e}")
                 return [] # Boa prática: retornar uma lista vazia em vez de 'None' para não quebrar o 'for' no HTML
+            
+    # Dentro da classe dbmanager no arquivo dbmanager.py
+
+    def buscar_refeicoes_periodo(self, empresa, data_inicio, data_fim):
+        with Session(self.engine) as session:
+            try:
+                # O joinedload(models.Refeicao.funcionario) resolve o erro!
+                stmt = select(models.Refeicao).options(
+                    joinedload(models.Refeicao.funcionario)
+                ).join(models.Colaborador).where(
+                    models.Colaborador.empresa == empresa,
+                    models.Refeicao.data >= data_inicio,
+                    models.Refeicao.data <= data_fim
+                ).order_by(models.Refeicao.data.desc())
+                
+                return session.scalars(stmt).all()
+            except Exception as e:
+                print(f"Erro ao buscar período: {e}")
+                return []
+            
+    # No arquivo dbmanager.py
+
+    def buscar_refeicoes_periodo(self, empresa, data_inicio, data_fim, tipo=None):
+        with Session(self.engine) as session:
+            try:
+                stmt = select(models.Refeicao).options(
+                    joinedload(models.Refeicao.funcionario)
+                ).join(models.Colaborador).where(
+                    models.Colaborador.empresa == empresa,
+                    models.Refeicao.data >= data_inicio,
+                    models.Refeicao.data <= data_fim
+                )
+                
+                # Se o usuário escolheu um tipo (Café, Almoço...), adiciona o filtro
+                if tipo and tipo != "Todos":
+                    stmt = stmt.where(models.Refeicao.tipo == tipo)
+                
+                stmt = stmt.order_by(models.Refeicao.data.desc())
+                return session.scalars(stmt).all()
+            except Exception as e:
+                print(f"Erro ao buscar período com filtro de tipo: {e}")
+                return []
